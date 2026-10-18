@@ -1,21 +1,31 @@
 // @ts-check
 import { test, expect } from "@playwright/test";
 
-test("has title", async ({ page }) => {
-  await page.goto("https://playwright.dev/");
+test.describe("login", () => {
+  test("a user can successfully log in with valid credentials from environment variables", async ({
+    page,
+  }) => {
+    await page.goto("/login/");
 
-  // Expect a title "to contain" a substring.
-  await expect(page).toHaveTitle(/Playwright/);
-});
+    await page.getByPlaceholder("Email").fill(process.env.TEST_USER_EMAIL);
+    await page
+      .getByPlaceholder("Password")
+      .fill(process.env.TEST_USER_PASSWORD);
+    await page.getByRole("button", { name: "Login" }).click();
 
-test("get started link", async ({ page }) => {
-  await page.goto("https://playwright.dev/");
+    await expect(page).toHaveURL("/");
+  });
 
-  // Click the get started link.
-  await page.getByRole("link", { name: "Get started" }).click();
+  test("user sees an error message with invalid credentials", async ({
+    page,
+  }) => {
+    await page.goto("/login/");
 
-  // Expects page to have a heading with the name of Installation.
-  await expect(
-    page.getByRole("heading", { name: "Installation" }),
-  ).toBeVisible();
+    await page.getByPlaceholder("Email").fill("wrong.email@stud.noroff.no");
+    await page.getByPlaceholder("Password").fill("wrongpassword");
+    await page.getByRole("button", { name: "Login" }).click();
+
+    await expect(page.getByRole("alert")).toBeVisible();
+    await expect(page).toHaveURL("/login/");
+  });
 });
